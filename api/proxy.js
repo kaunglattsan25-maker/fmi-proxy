@@ -1,7 +1,6 @@
-const fetch = require('node-fetch');
+const https = require('https');
 
 module.exports = async (req, res) => {
-  // Allow requests from your mobile app
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-FMI-Browser');
@@ -12,7 +11,7 @@ module.exports = async (req, res) => {
   }
 
   const targetUrl = 'https://fmi.34306.lol';
-  const path = req.url.replace('/api/proxy', ''); // Remove prefix
+  const path = req.url.replace('/api/proxy', '');
   const url = `${targetUrl}${path}`;
 
   const browserHeaders = {
@@ -22,21 +21,32 @@ module.exports = async (req, res) => {
     'Origin': 'https://fmi.34306.lol',
   };
 
-  // Add the token if the app sent it
   if (req.headers['x-fmi-browser']) {
     browserHeaders['X-FMI-Browser'] = req.headers['x-fmi-browser'];
   }
 
-  try {
-    const response = await fetch(url, {
-      method: req.method,
-      headers: browserHeaders,
-      body: req.method === 'POST' ? JSON.stringify(req.body) : undefined,
-    });
+  const options = {
+    method: req.method,
+    headers: browserHeaders,
+  };
 
-    const data = await response.text();
-    res.status(response.status).send(data);
-  } catch (error) {
-    res.status(500).json({ error: 'Proxy Error: ' + error.message });
+  const proxyReq = https.request(url, options, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res);
+  });
+
+  proxyReq.on('error', (err) => {
+    res.status(500).json({ error: 'Proxy Error: ' + err.message });
+  });
+
+  if (req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      proxyReq.write(body);
+      proxyReq.end();
+    });
+  } else {
+    proxyReq.end();
   }
 };
