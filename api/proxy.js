@@ -10,9 +10,9 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Remove /api/proxy from the path to get the original endpoint
-  const path = req.url.replace('/api/proxy', '');
-  const targetUrl = `https://fmi.34306.lol${path}`;
+  // Extract the actual path after /api/proxy
+  const urlPath = req.url.replace('/api/proxy', '');
+  const targetUrl = `https://fmi.34306.lol${urlPath}`;
 
   const browserHeaders = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
