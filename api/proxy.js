@@ -10,13 +10,13 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const targetUrl = 'https://fmi.34306.lol';
+  // Remove /api/proxy from the path to get the original endpoint
   const path = req.url.replace('/api/proxy', '');
-  const url = `${targetUrl}${path}`;
+  const targetUrl = `https://fmi.34306.lol${path}`;
 
   const browserHeaders = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-    'Accept': 'application/json, text/plain, */*',
+    'Accept': 'application/json',
     'Referer': 'https://fmi.34306.lol/',
     'Origin': 'https://fmi.34306.lol',
   };
@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
     headers: browserHeaders,
   };
 
-  const proxyReq = https.request(url, options, (proxyRes) => {
+  const proxyReq = https.request(targetUrl, options, (proxyRes) => {
     res.writeHead(proxyRes.statusCode, proxyRes.headers);
     proxyRes.pipe(res);
   });
